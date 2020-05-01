@@ -1,6 +1,9 @@
 # Raspberry Pi Kubernetes cluster
 
-
+1. [Setting up Pis](#setting-up-pis)
+1. [Setting up Kubernetes](#setting-up-kubernetes)
+    1. [Start a Kubernetes Dashboard](#start-a-kubernetes-dashboard)
+1. [Run a test ASP.NET Core app](#run-a-test-asp.net-core-app)
 
 ## Setting up Pis
 
@@ -49,6 +52,8 @@ Master node token can be found here: `/var/lib/rancher/k3s/server/node-token`
     to these:    
     on master node - `/etc/rancher/k3s/registries.yaml`, then run `sudo service k3s restart`    
     on agent nodes - `/etc/rancher/k3s-agent/registries.yaml`, then run `sudo service k3s-agent restart`    
+
+### Start a Kubernetes Dashboard
 
 1. Install Arkade, which will simplify running of a Kubernetes dashboard: `curl -sSL https://dl.get-arkade.dev | sudo sh`.    
 Then: `arkade install kubernetes-dashboard`, and we have a running dashboard.
