@@ -9,14 +9,15 @@
 1. Flash the SD cards with downloaded Ubuntu image using [balena Etcher](https://www.balena.io/etcher/).
 
 1. When Etcher has done it's work and before booting Raspberry Pi, we have to enable SSH access, as we will be building a headless setup. Reinsert the SD card so that the OS would mount it and create an empty text file named **ssh** in the card's boot directory:   
-Mac OS:  `$ touch /Volumes/system-boot/ssh`  
-Ubuntu: `$ touch /media/{user}/system-boot/ssh`
+    Mac OS:  `$ touch /Volumes/system-boot/ssh`  
+    Ubuntu: `$ touch /media/{user}/system-boot/ssh`  
+    
+    As we are already here, append this: `cgroup_enable=cpuset cgroup_enable=memory cgroup_memory=1` at the end of the line here: `/Volumes/system-boot/ssh/nobtcmd.txt`. This is needed for Kubernetes to run on our Ubuntu instances. And, `nobtcmd.txt` translates to 'no bluetooth', which is enabled by default. If bluetooth is enabled, then `btcmd.txt` needs to be changed instead.
+
 
 1. Start Pis and ssh into them: `ssh ubuntu@192.168.1.253`. Use `ubuntu` as password. In order to determine the IP addresses, use the `arp` utility as described [here.](https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi#4-boot-ubuntu-server)
 
 ## Setting up Kubernetes
-
-1. TODO:  Prepare Pis for Kubernetes (cgroups).
 
 1. Install k3s (a lightweight version of k8s) on master and agent Pis:  
 master node: `$ curl -sfL https://get.k3s.io | sh -`  
@@ -45,13 +46,22 @@ Master node token can be found here: `/var/lib/rancher/k3s/server/node-token`
         endpoint:
           - "http://192.168.1.251:5000" # <- Private Docker repo IP
     ```
-    to these: 
-    on master node - `/etc/rancher/k3s/registries.yaml`, then run `sudo service k3s restart`
-    on agent nodes - `/etc/rancher/k3s-agent/registries.yaml`, then run `sudo service k3s-agent restart`
+    to these:    
+    on master node - `/etc/rancher/k3s/registries.yaml`, then run `sudo service k3s restart`    
+    on agent nodes - `/etc/rancher/k3s-agent/registries.yaml`, then run `sudo service k3s-agent restart`    
 
-1. TODO: Install Kubernetes dashboard.
+1. Install Arkade, which will simplify running of a Kubernetes dashboard: `curl -sSL https://dl.get-arkade.dev | sudo sh`.    
+Then: `arkade install kubernetes-dashboard`, and we have a running dashboard.
 
-1. TODO: Access Kubernetes dashboard.
+1. In order to access the dashboard, first create an admin user as described [here.](https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md)
+
+1. Then, note the access token: `sudo kubectl -n kubernetes-dashboard describe secret $(sudo kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')`
+
+1. Run `kubectl proxy`
+
+1. Now the dashboard is only accessible from within a Kubernetes node. In order to access it from you pc, use ssh tunnel: `ssh -L localhost:8001:localhost:8001 ubuntu@192.168.1.253 -N`
+
+1. Access dashboard from your machine here: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
 
 ## Run a test ASP.NET Core app
 
